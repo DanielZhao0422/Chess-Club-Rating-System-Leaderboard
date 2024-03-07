@@ -1,0 +1,339 @@
+import java.util.*;
+import java.io.*;
+//imports
+
+  class Sort implements Comparable<Sort> {
+    //this is a class that is needed for the sorting function
+    //sets the variable names
+    String name;
+    int rating;
+
+    public Sort(String name, int rating) {
+      this.name = name;
+      this.rating = rating;
+      //clarifies this is a field and prevents error of duplicated variable
+    }
+
+    public int compareTo(Sort other) {
+      return Integer.compare(other.rating, this.rating);
+      //compares the certain rating to the other rating, which therefore sorts the integers from highest at the top, and lowest at the bottom
+    }
+  }
+
+class Main {
+  public static void main(String[] args) {
+
+    ArrayList<Integer> values = new ArrayList<>();
+    // this is an ArrayList that will hold the ratings of the players(these ratings
+    // will come from the file PlayerRatings
+    ArrayList<String> replacing = new ArrayList<>();
+
+    while (true) {
+
+      try {
+
+        File textFile = new File("PlayerRatings");
+        FileReader input;
+        BufferedReader readFile;
+        String textLine;
+        // variables needed for reading from a file
+
+        input = new FileReader(textFile);
+        readFile = new BufferedReader(input);
+        // FileReader is overall a java function that takes the file name as the first
+        // parameter and passes it to BufferedReader for functions
+
+        BufferedReader reader = new BufferedReader(new FileReader("PlayerRatings"));
+        String line;
+        List<Sort> list = new ArrayList<>();
+        while ((line = reader.readLine()) != null) {
+          String[] segments = line.split(":");
+          //Splits the line by the colon 
+          String name = segments[0];
+          //sets the first part that is split to the name
+          int rating = Integer.parseInt(segments[1]);
+          //sets the second part that is split to rating
+          list.add(new Sort(name, rating));
+          //adds them both to the list Arraylist
+        }
+        reader.close();
+        //closes the Scanner
+
+        Collections.sort(list);
+        //Sorts the list based on the ratings
+
+        int count = 0;
+        //sets the count at 0
+
+        // Write the sorted list to the output file
+        FileWriter writer = new FileWriter("PlayerRatings");
+        for (Sort sort : list) {
+          count++;
+          //increments count each time this is looped through
+          if (count < list.size()){
+            writer.write(sort.name + ":" + sort.rating + "\n");
+            //if the count is less than the size of the arraylist, it will therefore write this
+          }
+          else{
+            writer.write(sort.name + ":" + sort.rating);
+            //otherwise if the count is equal to the size of the arraylist, it will therefore write this
+
+        //Note: This is done to avoid the creation of new lines without anything in them
+          }
+        }
+          writer.close();
+        //closes the writer
+
+        while ((textLine = readFile.readLine()) != null) {
+          // reads each file in PlayerRatings
+          String numberOnly = textLine.replaceAll("[^0-9]", "");
+          int rating = Integer.parseInt(numberOnly);
+          values.add(rating);
+          replacing.add(textLine);
+          // this section overall takes the integers of a line, parses the integers into a integer variable and adds them to the values ArrayList
+        }
+
+        input.close();
+        readFile.close();
+        // closes the files
+
+        System.out.println("");
+        System.out.println("Welcome to Chess Ranker");
+        System.out.println("What would you like to do?");
+        System.out.println("1. Add or Delete a player");
+        System.out.println("2. Making Rating Changes");
+        System.out.println("3. Print Leaderboard");
+        System.out.println("4. Exit");
+        System.out.println("");
+        // prints a menu
+
+        Scanner response = new Scanner(System.in);
+        Scanner name = new Scanner(System.in);
+        Scanner remove = new Scanner(System.in);
+        Scanner lineNumber = new Scanner(System.in);
+        Scanner player1 = new Scanner(System.in);
+        Scanner player2 = new Scanner(System.in);
+        Scanner test = new Scanner(System.in);
+        // Scanners
+
+        int userResponse = response.nextInt();
+
+        if (userResponse == 1) {
+          System.out.println("Would you like to add or delete a player?");
+          System.out.println("1. Add a Player");
+          System.out.println("2. Delete a Player");
+          System.out.println("");
+          int playerAddDel = response.nextInt();
+
+          if (playerAddDel == 1) {
+            System.out.println("");
+            System.out.println("What is the Player's Name?");
+            String nameInput = name.nextLine();
+
+            FileWriter myWriter = new FileWriter("PlayerRatings", (true));
+            myWriter.write("\n" + nameInput + ":800");
+            myWriter.close();
+            // writes the name the user inputs into another file and sets their rating to 800
+            // this is due to the idea of fairness of wanting everyone to start on the same level
+          }
+
+          else if (playerAddDel == 2) {
+            System.out.println("Input the player's line number");
+            int lineInput = lineNumber.nextInt();
+            remove("PlayerRatings", lineInput);
+          }
+
+          else {
+            System.out.println("Invalid Option");
+            System.out.println("");
+          }
+          // if user inputs 1, they access the Add or Delete statement
+        }
+
+        else if (userResponse == 2) {
+          System.out.println("");
+          System.out.println("Who is playing against each other?");
+          System.out.println("Please input the line number of each player");
+          System.out.println("");
+
+          int playerLine = player1.nextInt();
+          int player2Line = player2.nextInt();
+
+          float R1 = values.get(playerLine - 1);
+          float R2 = values.get(player2Line - 1);
+          int K = 30;
+          //sets K = 30 and sets float R1 and R2 to the corresponding rating in the values arrayList
+          //it minuses 1 in order to put this corresponding rating to the person on the specifc line they input
+
+          System.out.println("Who Won the Match, Player 1 or 2?");
+          System.out.println("Please input a 1 for Player 1");
+          System.out.println("Please input a 2 for Player 2");
+          System.out.println("");
+
+          Scanner winner = new Scanner(System.in);
+          int result = winner.nextInt();
+
+          if (result == 1) {
+            //player 1 wins, thus increasing its rating
+            boolean d = true;
+            EloRating(R1, R2, K, d);
+            System.out.println("Please input the rounded number you see for each player");
+            String rating1 = test.nextLine();
+            String rating2 = test.nextLine();
+
+            FileWriter myWriter = new FileWriter("PlayerRatings", (true));
+            String line1 = replacing.get(playerLine - 1);
+            line1 = line1.replaceAll("[0-9]", "");
+
+            String line2 = replacing.get(player2Line - 1);
+            line2 = line2.replaceAll("[0-9]", "");
+
+            myWriter.write("\n" + line1 + rating1);
+            myWriter.write("\n" + line2 + rating2);
+            myWriter.close();
+            //keeps the name and colon, however deletes the rating and replaces it with the newly updated rating
+
+            remove("PlayerRatings", playerLine);
+            remove("PlayerRatings", player2Line - 1);
+            //removes the old line with the unupdated rating
+            //you have to minus 1 on the second remove as the first remove action has already occurrred, therefore shifting the placements
+
+          }
+
+          else if (result == 2) {
+            //player 2 wins, thus increasing its rating
+            boolean d = false;
+            EloRating(R1, R2, K, d);
+            System.out.println("Please input the number you see for each player");
+            String rating1 = test.nextLine();
+            String rating2 = test.nextLine();
+
+            FileWriter myWriter = new FileWriter("PlayerRatings", (true));
+            String line1 = replacing.get(playerLine - 1);
+            line1 = line1.replaceAll("[0-9]", "");
+
+            String line2 = replacing.get(player2Line - 1);
+            line2 = line2.replaceAll("[0-9]", "");
+
+            myWriter.write("\n" + line1 + rating1);
+            myWriter.write("\n" + line2 + rating2);
+            myWriter.close();
+
+            //keeps the name and colon, however deletes the rating and replaces it with the newly updated rating
+
+            remove("PlayerRatings", playerLine);
+            remove("PlayerRatings", player2Line - 1);
+            //removes the old line with the unupdated rating
+            //you have to minus 1 on the second remove as the first remove action has already occurrred, therefore shifting the placements
+
+            //Note: I did it this way to make the code loop more appealing and organized. Because of the issue of converting a void method to a string/int, I would not be able to use my rating equation method and instead have to manually type the entire formula in both statements. I thought it would be more efficient if the user looked at what was printed and typed it out, thus setting it to a variable I can use
+
+          }
+
+          else {
+            System.out.println("Invalid Option");
+            System.out.println("");
+          }
+        }
+
+        else if (userResponse == 3) {
+          System.out.println("");
+          Leaderboard leaderboard = new Leaderboard();
+          leaderboard.setVisible(true);
+          //prints the leaderboard through the form of a GUI
+        }
+
+        else if (userResponse == 4) {
+          System.out.println("");
+          System.out.println("Thank you and have a nice day!");
+          break;
+          //exit
+
+        }
+
+        else {
+          System.out.println("");
+          System.out.println("\nInvalid Option");
+          continue;
+          // increases userfriendliness
+        }
+
+      } // try
+
+      catch (Exception e) {
+        System.out.println(e);
+        System.out.println("");
+
+      } // catch
+    } // while
+  }
+
+  static float change(float rating1, float rating2) {
+    return 1.0f * 1.0f / (1 + 1.0f * (float) (Math.pow(10, 1.0f * (rating1 - rating2) / 400)));
+    // equation to find elo rating change
+    //I used a float in this case as I wanted an exact rating amount
+  }
+
+  public static void EloRating(float R1, float R2, int K, boolean d) {
+    float P1 = change(R2, R1);
+    float P2 = change(R1, R2);
+
+    if (d == true) {
+      R1 = R1 + K * (1 - P1);
+      R2 = R2 + K * (0 - P2);
+      //if player 1 wins
+
+    } else {
+      R1 = R1 + K * (0 - P1);
+      R2 = R2 + K * (1 - P2);
+      //if player 2 wins
+    }
+
+    System.out.println("Updated Ratings:");
+    System.out.println("");
+    System.out.println("Rating of player 1 = " + R1);
+    System.out.println("Rating of player 2 = " + R2);
+  }
+
+  public static void remove(String file, int delete) {
+    //this method is essentially used to read throughout the PlayerRatings file and delete the contents of the line that the user desires
+    //the PlayerRatings file is set to file in this case, and the int delete is the line the user wishes to delete in that specific file
+    //this method basically reads through the entire file and deletes the line of the integer parameter through creating a temporary file, deleting the old file and replacing it with a new file with the deleted line
+    String temp = "Player temp";
+    File old_file = new File(file);
+    File new_file = new File(temp);
+    int line = 0;
+    String currentLine;
+
+    try {
+      FileWriter write = new FileWriter(temp, true);
+      BufferedWriter bufferedWrite = new BufferedWriter(write);
+      PrintWriter printWrite = new PrintWriter(bufferedWrite);
+
+      FileReader fileRead = new FileReader(file);
+      BufferedReader bufferRead = new BufferedReader(fileRead);
+
+      while ((currentLine = bufferRead.readLine()) != null) {
+        line++;
+        if (delete != line) {
+          printWrite.println(currentLine);
+        }
+      }
+      printWrite.flush();
+      printWrite.close();
+      fileRead.close();
+      bufferRead.close();
+      bufferedWrite.close();
+      write.close();
+      old_file.delete();
+
+      File shift = new File(file);
+      new_file.renameTo(shift);
+      
+    } catch (Exception e) {
+      System.out.println("");
+      System.out.println("Invalid");
+      System.out.println("");
+    }
+  }
+}
